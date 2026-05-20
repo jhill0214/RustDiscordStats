@@ -181,7 +181,7 @@ namespace Oxide.Plugins
                     {
                         Puts($"[DiscordServerStats] Discord webhook failed: {code} - {response}");
                     }
-                }, this, new Dictionary<string, string> { { "Content-Type", "application/json" } }, "POST");
+                }, this, "POST", new Dictionary<string, string> { { "Content-Type", "application/json" } });
             }
             catch (System.Exception ex)
             {
