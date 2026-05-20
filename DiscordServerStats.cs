@@ -11,6 +11,7 @@ namespace Oxide.Plugins
     public class DiscordServerStats : RustPlugin
     {
         private PluginConfig config;
+        private WebRequests _webRequests;
 
         private class PluginConfig
         {
@@ -56,10 +57,15 @@ namespace Oxide.Plugins
 
         private void Init()
         {
+            _webRequests = Interface.Oxide.GetLibrary<WebRequests>();
+            LoadData();
+            LoadCommandCooldownData();
+
             // Force write config to ensure it's populated
             Config.WriteObject(config, true);
-            
+
             Puts("[DiscordServerStats] Loaded successfully");
+            Puts($"[DiscordServerStats] Discord URL: {config.DiscordWebhookUrl}");
             Puts($"[DiscordServerStats] Server stats enabled: {config.EnableServerStats}");
             Puts($"[DiscordServerStats] Update interval: {config.StatsUpdateInterval}s");
 
@@ -141,22 +147,30 @@ namespace Oxide.Plugins
                 message += $"Updated: {System.DateTime.Now:HH:mm:ss}\n";
                 message += $"Server: {hostname}";
 
-                var payload = new Newtonsoft.Json.Linq.JObject();
-                payload["content"] = message;
+                var payload = new Dictionary<string, string> { { "content", message } };
+                string jsonBody = Newtonsoft.Json.JsonConvert.SerializeObject(payload);
 
-                string json = payload.ToString(Newtonsoft.Json.Formatting.None);
-                Puts($"[DiscordServerStats] Sending message: {json}");
-                webrequest.EnqueuePost(config.DiscordWebhookUrl, json, (code, response) =>
+                var headers = new Dictionary<string, string>
                 {
-                    if (code != 200 && code != 204)
+                    { "Content-Type", "application/json" },
+                    { "User-Agent", "OxidePlugin-DiscordServerStats" }
+                };
+
+                Puts($"[DiscordServerStats] Sending message: {jsonBody}");
+                if (_webRequests != null)
+                {
+                    _webRequests.Enqueue(config.DiscordWebhookUrl, jsonBody, (code, response) =>
                     {
-                        Puts($"[DiscordServerStats] Discord webhook failed: {code} - {response}");
-                    }
-                    else
-                    {
-                        Puts($"[DiscordServerStats] Server stats sent successfully");
-                    }
-                }, this);
+                        if (code != 200 && code != 204 && code != 0)
+                        {
+                            Puts($"[DiscordServerStats] Discord webhook failed with code: {code}");
+                        }
+                        else
+                        {
+                            Puts($"[DiscordServerStats] Server stats sent successfully");
+                        }
+                    }, this, RequestMethod.POST, headers);
+                }
             }
             catch (System.Exception ex)
             {
