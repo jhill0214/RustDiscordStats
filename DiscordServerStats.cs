@@ -207,7 +207,7 @@ namespace Oxide.Plugins
                 embed["timestamp"] = System.DateTime.UtcNow.ToString("o");
 
                 var payload = new Newtonsoft.Json.Linq.JObject();
-                payload["content"] = " ";
+                payload["content"] = "📊 Server Stats Update";
                 payload["embeds"] = new Newtonsoft.Json.Linq.JArray { embed };
 
                 string json = payload.ToString(Newtonsoft.Json.Formatting.None);
