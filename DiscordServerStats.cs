@@ -132,34 +132,74 @@ namespace Oxide.Plugins
                 var seed = ConVar.Server.seed;
                 var hostname = ConVar.Server.hostname;
 
-                var fields = new List<object>
+                var fields = new Newtonsoft.Json.Linq.JArray
                 {
-                    new { name = "👥 Players", value = $"{playerCount}/{maxPlayers}", inline = true },
-                    new { name = "⚡ FPS", value = fps.ToString("F1"), inline = true },
-                    new { name = "⏱️ Uptime", value = $"{uptimeHours:F1}h", inline = true },
-                    new { name = "🏗️ Entities", value = entityCount.ToString(), inline = true },
-                    new { name = "🌱 Seed", value = seed.ToString(), inline = true },
-                    new { name = "📅 Last Update", value = System.DateTime.Now.ToString("HH:mm:ss"), inline = true }
+                    new Newtonsoft.Json.Linq.JObject
+                    {
+                        ["name"] = "👥 Players",
+                        ["value"] = $"{playerCount}/{maxPlayers}",
+                        ["inline"] = true
+                    },
+                    new Newtonsoft.Json.Linq.JObject
+                    {
+                        ["name"] = "⚡ FPS",
+                        ["value"] = fps.ToString("F1"),
+                        ["inline"] = true
+                    },
+                    new Newtonsoft.Json.Linq.JObject
+                    {
+                        ["name"] = "⏱️ Uptime",
+                        ["value"] = $"{uptimeHours:F1}h",
+                        ["inline"] = true
+                    },
+                    new Newtonsoft.Json.Linq.JObject
+                    {
+                        ["name"] = "🏗️ Entities",
+                        ["value"] = entityCount.ToString(),
+                        ["inline"] = true
+                    },
+                    new Newtonsoft.Json.Linq.JObject
+                    {
+                        ["name"] = "🌱 Seed",
+                        ["value"] = seed.ToString(),
+                        ["inline"] = true
+                    },
+                    new Newtonsoft.Json.Linq.JObject
+                    {
+                        ["name"] = "📅 Last Update",
+                        ["value"] = System.DateTime.Now.ToString("HH:mm:ss"),
+                        ["inline"] = true
+                    }
                 };
 
                 // Add player names if enabled
                 if (config.ShowPlayerNames && playerCount > 0)
                 {
                     var playerNames = string.Join(", ", GetPlayerNames());
-                    fields.Add(new { name = "👤 Online Players", value = playerNames.Length > 1024 ? playerNames.Substring(0, 1021) + "..." : playerNames, inline = false });
+                    fields.Add(new Newtonsoft.Json.Linq.JObject
+                    {
+                        ["name"] = "👤 Online Players",
+                        ["value"] = playerNames.Length > 1024 ? playerNames.Substring(0, 1021) + "..." : playerNames,
+                        ["inline"] = false
+                    });
                 }
 
                 // Add team info if enabled
                 if (config.ShowTeamInfo)
                 {
                     var teamCount = RelationshipManager.ServerInstance.playerToTeam.Count;
-                    fields.Add(new { name = "👥 Teams", value = teamCount.ToString(), inline = true });
+                    fields.Add(new Newtonsoft.Json.Linq.JObject
+                    {
+                        ["name"] = "👥 Teams",
+                        ["value"] = teamCount.ToString(),
+                        ["inline"] = true
+                    });
                 }
 
                 var embed = new Newtonsoft.Json.Linq.JObject();
                 embed["title"] = config.StatsEmbedTitle;
                 embed["color"] = ConvertColorToInt(config.StatsEmbedColor);
-                embed["fields"] = Newtonsoft.Json.Linq.JArray.FromObject(fields.ToArray());
+                embed["fields"] = fields;
                 embed["footer"] = new Newtonsoft.Json.Linq.JObject
                 {
                     ["text"] = $"Server: {hostname}"
@@ -167,9 +207,10 @@ namespace Oxide.Plugins
                 embed["timestamp"] = System.DateTime.UtcNow.ToString("o");
 
                 var payload = new Newtonsoft.Json.Linq.JObject();
+                payload["content"] = "📊 Server Stats Update";
                 payload["embeds"] = new Newtonsoft.Json.Linq.JArray { embed };
 
-                string json = payload.ToString();
+                string json = payload.ToString(Newtonsoft.Json.Formatting.None);
                 Puts($"[DiscordServerStats] Sending payload: {json}");
                 webrequest.EnqueuePost(config.DiscordWebhookUrl, json, (code, response) =>
                 {
