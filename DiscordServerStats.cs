@@ -175,13 +175,13 @@ namespace Oxide.Plugins
                 };
 
                 string json = Newtonsoft.Json.JsonConvert.SerializeObject(embed);
-                webrequest.Enqueue(config.DiscordWebhookUrl, json, (code, response) =>
+                webrequest.Post(config.DiscordWebhookUrl, json, (code, response) =>
                 {
                     if (code != 200 && code != 204)
                     {
                         Puts($"[DiscordServerStats] Discord webhook failed: {code} - {response}");
                     }
-                }, this, "POST", new Dictionary<string, string> { { "Content-Type", "application/json" } });
+                }, this);
             }
             catch (System.Exception ex)
             {
