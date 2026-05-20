@@ -156,7 +156,7 @@ namespace Oxide.Plugins
                     fields.Add(new { name = "👥 Teams", value = teamCount.ToString(), inline = true });
                 }
 
-                var embed = new
+                var payload = new
                 {
                     embeds = new[]
                     {
@@ -174,12 +174,17 @@ namespace Oxide.Plugins
                     }
                 };
 
-                string json = Newtonsoft.Json.JsonConvert.SerializeObject(embed);
+                string json = Newtonsoft.Json.JsonConvert.SerializeObject(payload);
+                Puts($"[DiscordServerStats] Sending payload: {json}");
                 webrequest.EnqueuePost(config.DiscordWebhookUrl, json, (code, response) =>
                 {
                     if (code != 200 && code != 204)
                     {
                         Puts($"[DiscordServerStats] Discord webhook failed: {code} - {response}");
+                    }
+                    else
+                    {
+                        Puts($"[DiscordServerStats] Server stats sent successfully");
                     }
                 }, this);
             }
