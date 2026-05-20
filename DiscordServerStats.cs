@@ -17,7 +17,7 @@ namespace Oxide.Plugins
             public string DiscordWebhookUrl { get; set; } = "";
             public bool EnableServerStats { get; set; } = false;
             public int StatsUpdateInterval { get; set; } = 300; // seconds (5 minutes)
-            public string StatsEmbedTitle { get; set; } = "📊 Server Stats";
+            public string StatsEmbedTitle { get; set; } = "Server Stats";
             public string StatsEmbedColor { get; set; } = "#00ff00";
             public bool ShowPlayerNames { get; set; } = false;
             public bool ShowTeamInfo { get; set; } = false;
