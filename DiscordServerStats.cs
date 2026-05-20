@@ -140,16 +140,14 @@ namespace Oxide.Plugins
                 var hostname = ConVar.Server.hostname;
 
                 // Calculate average ping
-                float totalPing = 0f;
-                int pingCount = 0;
+                float avgPing = 0f;
                 foreach (var player in BasePlayer.activePlayerList)
                 {
-                    if (player != null && player.net != null && player.net.connection != null)
+                    if (player != null && player.net != null)
                     {
                         try
                         {
-                            totalPing += player.net.connection.GetPing();
-                            pingCount++;
+                            avgPing += player.net.connection.ping;
                         }
                         catch
                         {
@@ -157,7 +155,8 @@ namespace Oxide.Plugins
                         }
                     }
                 }
-                float avgPing = pingCount > 0 ? totalPing / pingCount : 0f;
+                if (playerCount > 0)
+                    avgPing /= playerCount;
 
                 // Create Discord embed
                 var embed = new Newtonsoft.Json.Linq.JObject();
