@@ -132,14 +132,14 @@ namespace Oxide.Plugins
                 var seed = ConVar.Server.seed;
                 var hostname = ConVar.Server.hostname;
 
-                string message = $"📊 **Server Stats**\n";
-                message += $"👥 Players: {playerCount}/{maxPlayers}\n";
-                message += $"⚡ FPS: {fps:F1}\n";
-                message += $"⏱️ Uptime: {uptimeHours:F1}h\n";
-                message += $"🏗️ Entities: {entityCount}\n";
-                message += $"🌱 Seed: {seed}\n";
-                message += $"📅 Updated: {System.DateTime.Now:HH:mm:ss}\n";
-                message += $"�️ {hostname}";
+                string message = $"Server Stats\n";
+                message += $"Players: {playerCount}/{maxPlayers}\n";
+                message += $"FPS: {fps:F1}\n";
+                message += $"Uptime: {uptimeHours:F1}h\n";
+                message += $"Entities: {entityCount}\n";
+                message += $"Seed: {seed}\n";
+                message += $"Updated: {System.DateTime.Now:HH:mm:ss}\n";
+                message += $"Server: {hostname}";
 
                 var payload = new Newtonsoft.Json.Linq.JObject();
                 payload["content"] = message;
