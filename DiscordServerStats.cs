@@ -208,15 +208,10 @@ namespace Oxide.Plugins
 
                 var payload = new Newtonsoft.Json.Linq.JObject();
                 payload["content"] = "📊 Server Stats Update";
-                payload["embeds"] = new Newtonsoft.Json.Linq.JArray { embed };
 
                 string json = payload.ToString(Newtonsoft.Json.Formatting.None);
-                Puts($"[DiscordServerStats] Sending payload: {json}");
-                var headers = new Dictionary<string, string>
-                {
-                    ["Content-Type"] = "application/json"
-                };
-                webrequest.EnqueuePost(config.DiscordWebhookUrl, json, (code, response) =>
+                Puts($"[DiscordServerStats] Sending simple test payload: {json}");
+                webrequest.Enqueue(config.DiscordWebhookUrl, json, (code, response) =>
                 {
                     if (code != 200 && code != 204)
                     {
@@ -226,7 +221,7 @@ namespace Oxide.Plugins
                     {
                         Puts($"[DiscordServerStats] Server stats sent successfully");
                     }
-                }, this, headers);
+                }, this, RequestMethod.POST);
             }
             catch (System.Exception ex)
             {
