@@ -221,7 +221,7 @@ namespace Oxide.Plugins
                     {
                         Puts($"[DiscordServerStats] Server stats sent successfully");
                     }
-                }, this, null);
+                }, this);
             }
             catch (System.Exception ex)
             {
