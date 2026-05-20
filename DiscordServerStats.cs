@@ -13,6 +13,7 @@ namespace Oxide.Plugins
     {
         private PluginConfig config;
         private WebRequests _webRequests;
+        private string _lastMessageId;
 
         private class PluginConfig
         {
@@ -158,17 +159,60 @@ namespace Oxide.Plugins
                 Puts($"[DiscordServerStats] Sending message: {jsonBody}");
                 if (_webRequests != null)
                 {
-                    _webRequests.Enqueue(config.DiscordWebhookUrl, jsonBody, (code, response) =>
+                    if (string.IsNullOrEmpty(_lastMessageId))
                     {
-                        if (code != 200 && code != 204 && code != 0)
+                        // Send new message
+                        _webRequests.Enqueue(config.DiscordWebhookUrl, jsonBody, (code, response) =>
                         {
-                            Puts($"[DiscordServerStats] Discord webhook failed with code: {code}");
-                        }
-                        else
+                            if (code != 200 && code != 204 && code != 0)
+                            {
+                                Puts($"[DiscordServerStats] Discord webhook failed with code: {code}");
+                            }
+                            else
+                            {
+                                Puts($"[DiscordServerStats] Server stats sent successfully");
+                                // Extract message ID from response
+                                try
+                                {
+                                    var responseObj = Newtonsoft.Json.JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(response);
+                                    if (responseObj != null && responseObj["id"] != null)
+                                    {
+                                        _lastMessageId = responseObj["id"].ToString();
+                                        Puts($"[DiscordServerStats] Stored message ID: {_lastMessageId}");
+                                    }
+                                }
+                                catch
+                                {
+                                    Puts($"[DiscordServerStats] Could not parse message ID from response");
+                                }
+                            }
+                        }, this, RequestMethod.POST, headers);
+                    }
+                    else
+                    {
+                        // Edit existing message
+                        string webhookId = config.DiscordWebhookUrl.Split('/')[5];
+                        string webhookToken = config.DiscordWebhookUrl.Split('/')[6];
+                        string editUrl = $"https://discord.com/api/webhooks/{webhookId}/{webhookToken}/messages/{_lastMessageId}";
+
+                        _webRequests.Enqueue(editUrl, jsonBody, (code, response) =>
                         {
-                            Puts($"[DiscordServerStats] Server stats sent successfully");
-                        }
-                    }, this, RequestMethod.POST, headers);
+                            if (code != 200 && code != 204 && code != 0)
+                            {
+                                Puts($"[DiscordServerStats] Discord webhook edit failed with code: {code}");
+                                // If edit fails, clear the message ID and try sending a new message next time
+                                if (code == 404 || code == 403)
+                                {
+                                    _lastMessageId = null;
+                                    Puts($"[DiscordServerStats] Message no longer exists, will send new message next time");
+                                }
+                            }
+                            else
+                            {
+                                Puts($"[DiscordServerStats] Server stats updated successfully");
+                            }
+                        }, this, RequestMethod.PATCH, headers);
+                    }
                 }
             }
             catch (System.Exception ex)
