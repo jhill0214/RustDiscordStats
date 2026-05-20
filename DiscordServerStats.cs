@@ -144,10 +144,17 @@ namespace Oxide.Plugins
                 int pingCount = 0;
                 foreach (var player in BasePlayer.activePlayerList)
                 {
-                    if (player != null && player.net != null)
+                    if (player != null && player.net != null && player.net.connection != null)
                     {
-                        totalPing += player.net.connection.ping;
-                        pingCount++;
+                        try
+                        {
+                            totalPing += player.net.connection.GetPing();
+                            pingCount++;
+                        }
+                        catch
+                        {
+                            // Skip if ping unavailable
+                        }
                     }
                 }
                 float avgPing = pingCount > 0 ? totalPing / pingCount : 0f;
