@@ -207,10 +207,10 @@ namespace Oxide.Plugins
                 embed["timestamp"] = System.DateTime.UtcNow.ToString("o");
 
                 var payload = new Newtonsoft.Json.Linq.JObject();
-                payload["content"] = "📊 Server Stats Update";
+                payload["embeds"] = new Newtonsoft.Json.Linq.JArray { embed };
 
                 string json = payload.ToString(Newtonsoft.Json.Formatting.None);
-                Puts($"[DiscordServerStats] Sending simple test payload: {json}");
+                Puts($"[DiscordServerStats] Sending payload: {json}");
                 webrequest.Enqueue(config.DiscordWebhookUrl, json, (code, response) =>
                 {
                     if (code != 200 && code != 204)
