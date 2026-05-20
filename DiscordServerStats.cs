@@ -156,11 +156,13 @@ namespace Oxide.Plugins
                     { "User-Agent", "OxidePlugin-DiscordServerStats" }
                 };
 
+                Puts($"[DiscordServerStats] Last message ID: {_lastMessageId ?? "null (will send new message)"}");
                 Puts($"[DiscordServerStats] Sending message: {jsonBody}");
                 if (_webRequests != null)
                 {
                     if (string.IsNullOrEmpty(_lastMessageId))
                     {
+                        Puts($"[DiscordServerStats] Sending NEW message");
                         // Send new message
                         _webRequests.Enqueue(config.DiscordWebhookUrl, jsonBody, (code, response) =>
                         {
@@ -171,6 +173,7 @@ namespace Oxide.Plugins
                             else
                             {
                                 Puts($"[DiscordServerStats] Server stats sent successfully");
+                                Puts($"[DiscordServerStats] Response: {response}");
                                 // Extract message ID from response
                                 try
                                 {
@@ -190,16 +193,19 @@ namespace Oxide.Plugins
                     }
                     else
                     {
+                        Puts($"[DiscordServerStats] EDITING existing message ID: {_lastMessageId}");
                         // Edit existing message
                         string webhookId = config.DiscordWebhookUrl.Split('/')[5];
                         string webhookToken = config.DiscordWebhookUrl.Split('/')[6];
                         string editUrl = $"https://discord.com/api/webhooks/{webhookId}/{webhookToken}/messages/{_lastMessageId}";
+                        Puts($"[DiscordServerStats] Edit URL: {editUrl}");
 
                         _webRequests.Enqueue(editUrl, jsonBody, (code, response) =>
                         {
                             if (code != 200 && code != 204 && code != 0)
                             {
                                 Puts($"[DiscordServerStats] Discord webhook edit failed with code: {code}");
+                                Puts($"[DiscordServerStats] Edit response: {response}");
                                 // If edit fails, clear the message ID and try sending a new message next time
                                 if (code == 404 || code == 403)
                                 {
