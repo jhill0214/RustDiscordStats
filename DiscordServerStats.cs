@@ -68,9 +68,6 @@ namespace Oxide.Plugins
             Config.WriteObject(config, true);
 
             Puts("[DiscordServerStats] Loaded successfully");
-            Puts($"[DiscordServerStats] Discord Channel ID: {config.DiscordChannelId}");
-            Puts($"[DiscordServerStats] Server stats enabled: {config.EnableServerStats}");
-            Puts($"[DiscordServerStats] Update interval: {config.StatsUpdateInterval}s");
 
             if (config.EnableServerStats)
                 StartServerStats();
@@ -206,25 +203,19 @@ namespace Oxide.Plugins
 
                 string apiUrl = $"https://discord.com/api/v10/channels/{config.DiscordChannelId}/messages";
 
-                Puts($"[DiscordServerStats] Last message ID: {_lastMessageId ?? "null (will send new message)"}");
-                Puts($"[DiscordServerStats] Sending message: {jsonBody}");
                 if (_webRequests != null)
                 {
                     if (string.IsNullOrEmpty(_lastMessageId))
                     {
-                        Puts($"[DiscordServerStats] Sending NEW message");
                         // Send new message
                         _webRequests.Enqueue(apiUrl, jsonBody, (code, response) =>
                         {
                             if (code != 200 && code != 204 && code != 0)
                             {
-                                Puts($"[DiscordServerStats] Discord API failed with code: {code}");
-                                Puts($"[DiscordServerStats] Response: {response}");
+                                Puts($"[DiscordServerStats] Discord API failed: {code}");
                             }
                             else
                             {
-                                Puts($"[DiscordServerStats] Server stats sent successfully");
-                                Puts($"[DiscordServerStats] Response: {response}");
                                 // Extract message ID from response
                                 try
                                 {
@@ -232,39 +223,27 @@ namespace Oxide.Plugins
                                     if (responseObj != null && responseObj["id"] != null)
                                     {
                                         _lastMessageId = responseObj["id"].ToString();
-                                        Puts($"[DiscordServerStats] Stored message ID: {_lastMessageId}");
                                     }
                                 }
-                                catch
-                                {
-                                    Puts($"[DiscordServerStats] Could not parse message ID from response");
-                                }
+                                catch { }
                             }
                         }, this, RequestMethod.POST, headers);
                     }
                     else
                     {
-                        Puts($"[DiscordServerStats] EDITING existing message ID: {_lastMessageId}");
                         // Edit existing message
                         string editUrl = $"{apiUrl}/{_lastMessageId}";
-                        Puts($"[DiscordServerStats] Edit URL: {editUrl}");
 
                         _webRequests.Enqueue(editUrl, jsonBody, (code, response) =>
                         {
                             if (code != 200 && code != 204 && code != 0)
                             {
-                                Puts($"[DiscordServerStats] Discord API edit failed with code: {code}");
-                                Puts($"[DiscordServerStats] Edit response: {response}");
+                                Puts($"[DiscordServerStats] Discord API edit failed: {code}");
                                 // If edit fails, clear the message ID and try sending a new message next time
                                 if (code == 404 || code == 403)
                                 {
                                     _lastMessageId = null;
-                                    Puts($"[DiscordServerStats] Message no longer exists, will send new message next time");
                                 }
-                            }
-                            else
-                            {
-                                Puts($"[DiscordServerStats] Server stats updated successfully");
                             }
                         }, this, RequestMethod.PATCH, headers);
                     }
