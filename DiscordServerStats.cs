@@ -135,7 +135,22 @@ namespace Oxide.Plugins
                 var uptime = UnityEngine.Time.time;
                 var uptimeHours = System.TimeSpan.FromSeconds(uptime).TotalHours;
                 var entityCount = BaseNetworkable.serverEntities.Count;
+                var sleeperCount = BasePlayer.sleepingPlayerList.Count;
+                var mapSize = ConVar.Server.worldsize;
                 var hostname = ConVar.Server.hostname;
+
+                // Calculate average ping
+                float totalPing = 0f;
+                int pingCount = 0;
+                foreach (var player in BasePlayer.activePlayerList)
+                {
+                    if (player != null && player.net != null)
+                    {
+                        totalPing += player.net.connection.ping;
+                        pingCount++;
+                    }
+                }
+                float avgPing = pingCount > 0 ? totalPing / pingCount : 0f;
 
                 // Create Discord embed
                 var embed = new Newtonsoft.Json.Linq.JObject();
@@ -152,6 +167,13 @@ namespace Oxide.Plugins
                 playerField["inline"] = true;
                 fields.Add(playerField);
 
+                // Sleepers field
+                var sleeperField = new Newtonsoft.Json.Linq.JObject();
+                sleeperField["name"] = "💤 Sleepers";
+                sleeperField["value"] = sleeperCount.ToString();
+                sleeperField["inline"] = true;
+                fields.Add(sleeperField);
+
                 // FPS field
                 var fpsField = new Newtonsoft.Json.Linq.JObject();
                 fpsField["name"] = "⚡ FPS";
@@ -159,12 +181,26 @@ namespace Oxide.Plugins
                 fpsField["inline"] = true;
                 fields.Add(fpsField);
 
+                // Ping field
+                var pingField = new Newtonsoft.Json.Linq.JObject();
+                pingField["name"] = "📶 Avg Ping";
+                pingField["value"] = $"{avgPing:F0}ms";
+                pingField["inline"] = true;
+                fields.Add(pingField);
+
                 // Uptime field
                 var uptimeField = new Newtonsoft.Json.Linq.JObject();
                 uptimeField["name"] = "⏱️ Uptime";
                 uptimeField["value"] = $"{uptimeHours:F1}h";
                 uptimeField["inline"] = true;
                 fields.Add(uptimeField);
+
+                // Map size field
+                var mapField = new Newtonsoft.Json.Linq.JObject();
+                mapField["name"] = "🗺️ Map Size";
+                mapField["value"] = $"{mapSize}";
+                mapField["inline"] = true;
+                fields.Add(mapField);
 
                 // Entities field
                 var entityField = new Newtonsoft.Json.Linq.JObject();
@@ -178,7 +214,7 @@ namespace Oxide.Plugins
                 connectField["name"] = "🔗 Connect";
                 if (!string.IsNullOrEmpty(config.ServerIp))
                 {
-                    connectField["value"] = $"connect {config.ServerIp}:{config.ServerPort}";
+                    connectField["value"] = $"{config.ServerIp}:{config.ServerPort}";
                 }
                 else
                 {
