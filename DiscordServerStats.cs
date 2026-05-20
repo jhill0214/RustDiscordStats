@@ -59,8 +59,6 @@ namespace Oxide.Plugins
         private void Init()
         {
             _webRequests = Interface.Oxide.GetLibrary<WebRequests>();
-            LoadData();
-            LoadCommandCooldownData();
 
             // Force write config to ensure it's populated
             Config.WriteObject(config, true);
