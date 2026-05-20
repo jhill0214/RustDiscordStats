@@ -211,7 +211,7 @@ namespace Oxide.Plugins
 
                 string json = payload.ToString(Newtonsoft.Json.Formatting.None);
                 Puts($"[DiscordServerStats] Sending payload: {json}");
-                webrequest.Enqueue(config.DiscordWebhookUrl, json, (code, response) =>
+                webrequest.EnqueuePost(config.DiscordWebhookUrl, json, (code, response) =>
                 {
                     if (code != 200 && code != 204)
                     {
@@ -221,7 +221,7 @@ namespace Oxide.Plugins
                     {
                         Puts($"[DiscordServerStats] Server stats sent successfully");
                     }
-                }, this, RequestMethod.POST);
+                }, this);
             }
             catch (System.Exception ex)
             {
