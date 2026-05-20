@@ -139,25 +139,6 @@ namespace Oxide.Plugins
                 var mapSize = ConVar.Server.worldsize;
                 var hostname = ConVar.Server.hostname;
 
-                // Calculate average ping
-                float avgPing = 0f;
-                foreach (var player in BasePlayer.activePlayerList)
-                {
-                    if (player != null && player.net != null)
-                    {
-                        try
-                        {
-                            avgPing += player.net.connection.ping;
-                        }
-                        catch
-                        {
-                            // Skip if ping unavailable
-                        }
-                    }
-                }
-                if (playerCount > 0)
-                    avgPing /= playerCount;
-
                 // Create Discord embed
                 var embed = new Newtonsoft.Json.Linq.JObject();
                 embed["title"] = config.StatsEmbedTitle;
@@ -186,13 +167,6 @@ namespace Oxide.Plugins
                 fpsField["value"] = $"{fps:F1}";
                 fpsField["inline"] = true;
                 fields.Add(fpsField);
-
-                // Ping field
-                var pingField = new Newtonsoft.Json.Linq.JObject();
-                pingField["name"] = "📶 Avg Ping";
-                pingField["value"] = $"{avgPing:F0}ms";
-                pingField["inline"] = true;
-                fields.Add(pingField);
 
                 // Uptime field
                 var uptimeField = new Newtonsoft.Json.Linq.JObject();
