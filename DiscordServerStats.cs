@@ -132,86 +132,20 @@ namespace Oxide.Plugins
                 var seed = ConVar.Server.seed;
                 var hostname = ConVar.Server.hostname;
 
-                var fields = new Newtonsoft.Json.Linq.JArray
-                {
-                    new Newtonsoft.Json.Linq.JObject
-                    {
-                        ["name"] = "👥 Players",
-                        ["value"] = $"{playerCount}/{maxPlayers}",
-                        ["inline"] = true
-                    },
-                    new Newtonsoft.Json.Linq.JObject
-                    {
-                        ["name"] = "⚡ FPS",
-                        ["value"] = fps.ToString("F1"),
-                        ["inline"] = true
-                    },
-                    new Newtonsoft.Json.Linq.JObject
-                    {
-                        ["name"] = "⏱️ Uptime",
-                        ["value"] = $"{uptimeHours:F1}h",
-                        ["inline"] = true
-                    },
-                    new Newtonsoft.Json.Linq.JObject
-                    {
-                        ["name"] = "🏗️ Entities",
-                        ["value"] = entityCount.ToString(),
-                        ["inline"] = true
-                    },
-                    new Newtonsoft.Json.Linq.JObject
-                    {
-                        ["name"] = "🌱 Seed",
-                        ["value"] = seed.ToString(),
-                        ["inline"] = true
-                    },
-                    new Newtonsoft.Json.Linq.JObject
-                    {
-                        ["name"] = "📅 Last Update",
-                        ["value"] = System.DateTime.Now.ToString("HH:mm:ss"),
-                        ["inline"] = true
-                    }
-                };
-
-                // Add player names if enabled
-                if (config.ShowPlayerNames && playerCount > 0)
-                {
-                    var playerNames = string.Join(", ", GetPlayerNames());
-                    fields.Add(new Newtonsoft.Json.Linq.JObject
-                    {
-                        ["name"] = "👤 Online Players",
-                        ["value"] = playerNames.Length > 1024 ? playerNames.Substring(0, 1021) + "..." : playerNames,
-                        ["inline"] = false
-                    });
-                }
-
-                // Add team info if enabled
-                if (config.ShowTeamInfo)
-                {
-                    var teamCount = RelationshipManager.ServerInstance.playerToTeam.Count;
-                    fields.Add(new Newtonsoft.Json.Linq.JObject
-                    {
-                        ["name"] = "👥 Teams",
-                        ["value"] = teamCount.ToString(),
-                        ["inline"] = true
-                    });
-                }
-
-                var embed = new Newtonsoft.Json.Linq.JObject();
-                embed["title"] = config.StatsEmbedTitle;
-                embed["color"] = ConvertColorToInt(config.StatsEmbedColor);
-                embed["fields"] = fields;
-                embed["footer"] = new Newtonsoft.Json.Linq.JObject
-                {
-                    ["text"] = $"Server: {hostname}"
-                };
-                embed["timestamp"] = System.DateTime.UtcNow.ToString("o");
+                string message = $"📊 **Server Stats**\n";
+                message += $"👥 Players: {playerCount}/{maxPlayers}\n";
+                message += $"⚡ FPS: {fps:F1}\n";
+                message += $"⏱️ Uptime: {uptimeHours:F1}h\n";
+                message += $"🏗️ Entities: {entityCount}\n";
+                message += $"🌱 Seed: {seed}\n";
+                message += $"📅 Updated: {System.DateTime.Now:HH:mm:ss}\n";
+                message += $"�️ {hostname}";
 
                 var payload = new Newtonsoft.Json.Linq.JObject();
-                payload["content"] = "📊 Server Stats Update";
-                payload["embeds"] = new Newtonsoft.Json.Linq.JArray { embed };
+                payload["content"] = message;
 
                 string json = payload.ToString(Newtonsoft.Json.Formatting.None);
-                Puts($"[DiscordServerStats] Sending payload: {json}");
+                Puts($"[DiscordServerStats] Sending message: {json}");
                 webrequest.EnqueuePost(config.DiscordWebhookUrl, json, (code, response) =>
                 {
                     if (code != 200 && code != 204)
