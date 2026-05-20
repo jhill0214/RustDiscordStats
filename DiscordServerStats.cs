@@ -21,7 +21,9 @@ namespace Oxide.Plugins
             public string DiscordChannelId { get; set; } = "";
             public bool EnableServerStats { get; set; } = false;
             public int StatsUpdateInterval { get; set; } = 300; // seconds (5 minutes)
-            public string StatsEmbedTitle { get; set; } = "Server Stats";
+            public string ServerIp { get; set; } = "";
+            public int ServerPort { get; set; } = 28015;
+            public string StatsEmbedTitle { get; set; } = "📊 Server Stats";
             public string StatsEmbedColor { get; set; } = "#00ff00";
             public bool ShowPlayerNames { get; set; } = false;
             public bool ShowTeamInfo { get; set; } = false;
@@ -136,20 +138,64 @@ namespace Oxide.Plugins
                 var uptime = UnityEngine.Time.time;
                 var uptimeHours = System.TimeSpan.FromSeconds(uptime).TotalHours;
                 var entityCount = BaseNetworkable.serverEntities.Count;
-                var seed = ConVar.Server.seed;
                 var hostname = ConVar.Server.hostname;
 
-                string message = $"Server Stats\n";
-                message += $"Players: {playerCount}/{maxPlayers}\n";
-                message += $"FPS: {fps:F1}\n";
-                message += $"Uptime: {uptimeHours:F1}h\n";
-                message += $"Entities: {entityCount}\n";
-                message += $"Seed: {seed}\n";
-                message += $"Updated: {System.DateTime.Now:HH:mm:ss}\n";
-                message += $"Server: {hostname}";
+                // Create Discord embed
+                var embed = new Newtonsoft.Json.Linq.JObject();
+                embed["title"] = config.StatsEmbedTitle;
+                embed["color"] = ConvertColorToInt(config.StatsEmbedColor);
+                embed["timestamp"] = System.DateTime.Now.ToString("o");
 
-                var payload = new Dictionary<string, string> { { "content", message } };
-                string jsonBody = Newtonsoft.Json.JsonConvert.SerializeObject(payload);
+                var fields = new Newtonsoft.Json.Linq.JArray();
+
+                // Players field
+                var playerField = new Newtonsoft.Json.Linq.JObject();
+                playerField["name"] = "👥 Players";
+                playerField["value"] = $"{playerCount}/{maxPlayers}";
+                playerField["inline"] = true;
+                fields.Add(playerField);
+
+                // FPS field
+                var fpsField = new Newtonsoft.Json.Linq.JObject();
+                fpsField["name"] = "⚡ FPS";
+                fpsField["value"] = $"{fps:F1}";
+                fpsField["inline"] = true;
+                fields.Add(fpsField);
+
+                // Uptime field
+                var uptimeField = new Newtonsoft.Json.Linq.JObject();
+                uptimeField["name"] = "⏱️ Uptime";
+                uptimeField["value"] = $"{uptimeHours:F1}h";
+                uptimeField["inline"] = true;
+                fields.Add(uptimeField);
+
+                // Entities field
+                var entityField = new Newtonsoft.Json.Linq.JObject();
+                entityField["name"] = "🏗️ Entities";
+                entityField["value"] = entityCount.ToString();
+                entityField["inline"] = true;
+                fields.Add(entityField);
+
+                // Connection info field
+                var connectField = new Newtonsoft.Json.Linq.JObject();
+                connectField["name"] = "🔗 Connect";
+                if (!string.IsNullOrEmpty(config.ServerIp))
+                {
+                    connectField["value"] = $"connect {config.ServerIp}:{config.ServerPort}";
+                }
+                else
+                {
+                    connectField["value"] = hostname;
+                }
+                connectField["inline"] = false;
+                fields.Add(connectField);
+
+                embed["fields"] = fields;
+
+                var payload = new Newtonsoft.Json.Linq.JObject();
+                payload["embeds"] = new Newtonsoft.Json.Linq.JArray { embed };
+
+                string jsonBody = payload.ToString(Newtonsoft.Json.Formatting.None);
 
                 var headers = new Dictionary<string, string>
                 {
