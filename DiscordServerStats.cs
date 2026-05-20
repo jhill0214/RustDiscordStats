@@ -17,7 +17,8 @@ namespace Oxide.Plugins
 
         private class PluginConfig
         {
-            public string DiscordWebhookUrl { get; set; } = "";
+            public string DiscordBotToken { get; set; } = "";
+            public string DiscordChannelId { get; set; } = "";
             public bool EnableServerStats { get; set; } = false;
             public int StatsUpdateInterval { get; set; } = 300; // seconds (5 minutes)
             public string StatsEmbedTitle { get; set; } = "Server Stats";
@@ -65,7 +66,7 @@ namespace Oxide.Plugins
             Config.WriteObject(config, true);
 
             Puts("[DiscordServerStats] Loaded successfully");
-            Puts($"[DiscordServerStats] Discord URL: {config.DiscordWebhookUrl}");
+            Puts($"[DiscordServerStats] Discord Channel ID: {config.DiscordChannelId}");
             Puts($"[DiscordServerStats] Server stats enabled: {config.EnableServerStats}");
             Puts($"[DiscordServerStats] Update interval: {config.StatsUpdateInterval}s");
 
@@ -153,8 +154,11 @@ namespace Oxide.Plugins
                 var headers = new Dictionary<string, string>
                 {
                     { "Content-Type", "application/json" },
+                    { "Authorization", $"Bot {config.DiscordBotToken}" },
                     { "User-Agent", "OxidePlugin-DiscordServerStats" }
                 };
+
+                string apiUrl = $"https://discord.com/api/v10/channels/{config.DiscordChannelId}/messages";
 
                 Puts($"[DiscordServerStats] Last message ID: {_lastMessageId ?? "null (will send new message)"}");
                 Puts($"[DiscordServerStats] Sending message: {jsonBody}");
@@ -164,11 +168,12 @@ namespace Oxide.Plugins
                     {
                         Puts($"[DiscordServerStats] Sending NEW message");
                         // Send new message
-                        _webRequests.Enqueue(config.DiscordWebhookUrl, jsonBody, (code, response) =>
+                        _webRequests.Enqueue(apiUrl, jsonBody, (code, response) =>
                         {
                             if (code != 200 && code != 204 && code != 0)
                             {
-                                Puts($"[DiscordServerStats] Discord webhook failed with code: {code}");
+                                Puts($"[DiscordServerStats] Discord API failed with code: {code}");
+                                Puts($"[DiscordServerStats] Response: {response}");
                             }
                             else
                             {
@@ -195,16 +200,14 @@ namespace Oxide.Plugins
                     {
                         Puts($"[DiscordServerStats] EDITING existing message ID: {_lastMessageId}");
                         // Edit existing message
-                        string webhookId = config.DiscordWebhookUrl.Split('/')[5];
-                        string webhookToken = config.DiscordWebhookUrl.Split('/')[6];
-                        string editUrl = $"https://discord.com/api/webhooks/{webhookId}/{webhookToken}/messages/{_lastMessageId}";
+                        string editUrl = $"{apiUrl}/{_lastMessageId}";
                         Puts($"[DiscordServerStats] Edit URL: {editUrl}");
 
                         _webRequests.Enqueue(editUrl, jsonBody, (code, response) =>
                         {
                             if (code != 200 && code != 204 && code != 0)
                             {
-                                Puts($"[DiscordServerStats] Discord webhook edit failed with code: {code}");
+                                Puts($"[DiscordServerStats] Discord API edit failed with code: {code}");
                                 Puts($"[DiscordServerStats] Edit response: {response}");
                                 // If edit fails, clear the message ID and try sending a new message next time
                                 if (code == 404 || code == 403)
