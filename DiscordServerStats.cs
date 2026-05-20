@@ -156,25 +156,20 @@ namespace Oxide.Plugins
                     fields.Add(new { name = "👥 Teams", value = teamCount.ToString(), inline = true });
                 }
 
-                var payload = new
+                var embed = new Newtonsoft.Json.Linq.JObject();
+                embed["title"] = config.StatsEmbedTitle;
+                embed["color"] = ConvertColorToInt(config.StatsEmbedColor);
+                embed["fields"] = Newtonsoft.Json.Linq.JArray.FromObject(fields.ToArray());
+                embed["footer"] = new Newtonsoft.Json.Linq.JObject
                 {
-                    embeds = new[]
-                    {
-                        new
-                        {
-                            title = config.StatsEmbedTitle,
-                            color = ConvertColorToInt(config.StatsEmbedColor),
-                            fields = fields.ToArray(),
-                            footer = new
-                            {
-                                text = $"Server: {hostname}"
-                            },
-                            timestamp = System.DateTime.UtcNow.ToString("o")
-                        }
-                    }
+                    ["text"] = $"Server: {hostname}"
                 };
+                embed["timestamp"] = System.DateTime.UtcNow.ToString("o");
 
-                string json = Newtonsoft.Json.JsonConvert.SerializeObject(payload);
+                var payload = new Newtonsoft.Json.Linq.JObject();
+                payload["embeds"] = new Newtonsoft.Json.Linq.JArray { embed };
+
+                string json = payload.ToString();
                 Puts($"[DiscordServerStats] Sending payload: {json}");
                 webrequest.EnqueuePost(config.DiscordWebhookUrl, json, (code, response) =>
                 {
