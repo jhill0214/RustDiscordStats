@@ -109,9 +109,9 @@ namespace Oxide.Plugins
 
         private void StartServerStats()
         {
-            if (string.IsNullOrEmpty(config.DiscordWebhookUrl))
+            if (string.IsNullOrEmpty(config.DiscordBotToken) || string.IsNullOrEmpty(config.DiscordChannelId))
             {
-                Puts("[DiscordServerStats] Discord webhook URL is not configured. Server stats disabled.");
+                Puts("[DiscordServerStats] Discord bot token or channel ID is not configured. Server stats disabled.");
                 return;
             }
 
